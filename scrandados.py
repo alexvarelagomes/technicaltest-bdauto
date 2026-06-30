@@ -19,30 +19,52 @@ def extrair_dados():
     time.sleep(15)
 
     script_js = """
-    var callback = arguments[arguments.length - 1];
-    fetch('https://teste-tecnico-dados.hubbi.app/?application=Igni%C3%A7%C3%A3o', {
-        headers: { 'Accept': 'application/json' }
-    })
-    .then(response => response.json())
-    .then(data => callback(data))
-    .catch(error => callback({error: error.message}));
-    """
+        var pagina = arguments[0];
+        var callback = arguments[arguments.length - 1];
+        fetch('https://teste-tecnico-dados.hubbi.app/?application=Igni%C3%A7%C3%A3o&page=' + pagina, {
+            headers: { 'Accept': 'application/json' }
+        })
+        .then(response => response.json())
+        .then(data => callback(data))
+        .catch(error => callback({error: error.message}));
+        """
     
-    # Executa o script de forma assíncrona e captura a resposta direto para o Python
-    produtos_extraidos = driver.execute_async_script(script_js)
+    # Dicionário para armazenar os dados extraídos.
+    produtos_extraidos = {'data': []}
     
-    if 'error' in produtos_extraidos:
-        print(f"Erro capturado pelo JS: {produtos_extraidos['error']}")
+    print("Mapeando paginação...")
+    primeira_resposta = driver.execute_async_script(script_js, 1)
+    
+    if 'error' in primeira_resposta:
+        print(f"Erro capturado pelo JS: {primeira_resposta['error']}")
+        driver.quit()
         return
+        
+    # Armazena os dados da primeira página e descobre o limite de paginação dinamicamente
+    produtos_extraidos['data'].extend(primeira_resposta['data'])
+    ultima_pagina = primeira_resposta['meta']['last_page']
+    
+    # Itera sobre as páginas para coletar os dados.
+    for pagina_atual in range(ultima_pagina + 1):
+        print(f"Coletando página {pagina_atual} de {ultima_pagina}...")
+        
+        # Executa o script js para coletar os dados de cada página.
+        resposta = driver.execute_async_script(script_js, pagina_atual)
+        
+        if 'error' not in resposta:
+            produtos_extraidos['data'].extend(resposta['data'])
+        else:
+            print(f"Falha ao extrair página {pagina_atual}: {resposta['error']}")
+            
+        time.sleep(0.5) 
 
-    print("Dados extraídos com sucesso.")
-    print(f"Total de registros: ({len(produtos_extraidos)})")
+    print("\nColeta finalizada.")
+    print(f"Total de registros: {len(produtos_extraidos['data'])}")
     
     driver.quit()
 
     # Repassa para o Pandas
     return produtos_extraidos
-
 
 if __name__ == "__main__":
     dados = extrair_dados()
