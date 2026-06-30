@@ -45,7 +45,7 @@ def extrair_dados():
     ultima_pagina = primeira_resposta['meta']['last_page']
     
     # Itera sobre as páginas para coletar os dados.
-    for pagina_atual in range(ultima_pagina + 1):
+    for pagina_atual in range(1, ultima_pagina + 1):
         print(f"Coletando página {pagina_atual} de {ultima_pagina}...")
         
         # Executa o script js para coletar os dados de cada página.
