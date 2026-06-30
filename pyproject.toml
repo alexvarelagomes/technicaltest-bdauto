@@ -1,0 +1,14 @@
+[project]
+name = "dados-automotivos"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+    "beautifulsoup4>=4.15.0",
+    "pandas>=3.0.3",
+    "requests>=2.34.2",
+    "selenium>=4.45.0",
+    "setuptools>=82.0.1",
+    "undetected-chromedriver>=3.5.5",
+]
