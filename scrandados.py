@@ -2,6 +2,7 @@ import undetected_chromedriver as uc
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+import json
 import time
 
 def extrair_dados():
@@ -18,10 +19,18 @@ def extrair_dados():
     
     time.sleep(15)
 
+    element_json = driver.find_element(By.XPATH, '//script[@type="application/json"]')
+    conteudo_json = json.loads(element_json.get_attribute('innerHTML'))
+    lista_categorias = conteudo_json['props']['available_categories']
+    
+    # Dicionário para armazenar os dados extraídos.
+    produtos_extraidos = {'data': []}
+
     script_js = """
-        var pagina = arguments[0];
+        var categoria = arguments[0];
+        var pagina = arguments[1];
         var callback = arguments[arguments.length - 1];
-        fetch('https://teste-tecnico-dados.hubbi.app/?application=Igni%C3%A7%C3%A3o&page=' + pagina, {
+        fetch('https://teste-tecnico-dados.hubbi.app/?application=' + encodeURIComponent(categoria) + '&page=' + pagina, {
             headers: { 'Accept': 'application/json' }
         })
         .then(response => response.json())
@@ -29,34 +38,31 @@ def extrair_dados():
         .catch(error => callback({error: error.message}));
         """
     
-    # Dicionário para armazenar os dados extraídos.
-    produtos_extraidos = {'data': []}
-    
-    print("Mapeando paginação...")
-    primeira_resposta = driver.execute_async_script(script_js, 1)
-    
-    if 'error' in primeira_resposta:
-        print(f"Erro capturado pelo JS: {primeira_resposta['error']}")
-        driver.quit()
-        return
+    for categoria_atual in lista_categorias:
+        print(f"\nIniciando coleta da categoria: {categoria_atual}")
         
-    # Armazena os dados da primeira página e descobre o limite de paginação dinamicamente
-    produtos_extraidos['data'].extend(primeira_resposta['data'])
-    ultima_pagina = primeira_resposta['meta']['last_page']
+        # Mapeia a primeira página para saber o limite de paginação desta categoria específica
+        primeira_resposta = driver.execute_async_script(script_js, categoria_atual, 1)
+        
+        if 'error' in primeira_resposta:
+            print(f"Erro na categoria {categoria_atual}: {primeira_resposta['error']}")
+            continue
+        
+        # Armazena os dados da primeira página e descobre o limite de paginação dinamicamente
+        produtos_extraidos['data'].extend(primeira_resposta['data'])
+        ultima_pagina = primeira_resposta['meta']['last_page']
     
-    # Itera sobre as páginas para coletar os dados.
-    for pagina_atual in range(1, ultima_pagina + 1):
-        print(f"Coletando página {pagina_atual} de {ultima_pagina}...")
-        
-        # Executa o script js para coletar os dados de cada página.
-        resposta = driver.execute_async_script(script_js, pagina_atual)
-        
-        if 'error' not in resposta:
-            produtos_extraidos['data'].extend(resposta['data'])
-        else:
-            print(f"Falha ao extrair página {pagina_atual}: {resposta['error']}")
+        # Itera sobre as páginas para coletar os dados.
+        for pagina_atual in range(1, ultima_pagina + 1):
+            print(f"Coletando {categoria_atual} - Página {pagina_atual} de {ultima_pagina}...")
             
-        time.sleep(0.5) 
+            # Executa o script js para coletar os dados de cada página.
+            resposta = driver.execute_async_script(script_js, categoria_atual, pagina_atual)
+            
+            if 'error' not in resposta:
+                produtos_extraidos['data'].extend(resposta['data'])
+                
+            time.sleep(0.5) 
 
     print("\nColeta finalizada.")
     print(f"Total de registros: {len(produtos_extraidos['data'])}")
