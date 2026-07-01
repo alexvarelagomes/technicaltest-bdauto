@@ -47,10 +47,9 @@ def extrair_dados():
         if 'error' in primeira_resposta:
             print(f"Erro na categoria {categoria_atual}: {primeira_resposta['error']}")
             continue
-        
-        # Armazena os dados da primeira página e descobre o limite de paginação dinamicamente
-        produtos_extraidos['data'].extend(primeira_resposta['data'])
-        ultima_pagina = primeira_resposta['meta']['last_page']
+        else:
+            produtos_extraidos['data'].extend(primeira_resposta['data'])
+            ultima_pagina = primeira_resposta['meta']['last_page']
     
         # Itera sobre as páginas para coletar os dados.
         for pagina_atual in range(1, ultima_pagina + 1):
