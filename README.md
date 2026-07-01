@@ -1,3 +1,5 @@
+# Pipeline ETL Automotivo
+
 ### 1. Extração - `scrandados.py`
 * **Bypass do Cloudflare:** Para burlar os bloqueios do site, utilizei o `undetected-chromedriver` fixando a versão do navegador. Isso evita que o scraper seja barrado logo na tela inicial pelo anti-bot.
 * **Busca dinâmica de categorias:** Para o script não quebrar caso o layout do site mude (fugindo de XPaths frágeis), o código extrai o JSON embutido na própria página para pegar a lista oficial de categorias (ex: `SUSPENSÃO`, `IGNIÇÃO`).
