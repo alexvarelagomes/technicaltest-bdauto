@@ -51,7 +51,7 @@ def realizar_ingestao(df_tratado):
     cursor.executemany(query, registros)
     conn.commit()
     print(f"Ingestão concluída. Linhas processadas: {len(registros)} | Novas linhas inseridas: {cursor.rowcount}")
-    conn.rollback()
+
     conn.close()
 
 # Trás os dados tratados do Pandas e realiza a ingestão no banco SQLite.
